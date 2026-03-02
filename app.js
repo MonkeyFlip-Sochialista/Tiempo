@@ -670,7 +670,7 @@ function init() {
     setInterval(() => {
         if ('requestIdleCallback' in window) requestIdleCallback(refresh, { timeout: 5000 });
         else refresh();
-    }, 10 * 60 * 1000);
+    }, 30 * 60 * 1000);
 }
 
 document.addEventListener('DOMContentLoaded', init, { once: true });
