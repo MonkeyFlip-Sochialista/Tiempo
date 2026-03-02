@@ -1,57 +1,52 @@
 ﻿/**
- * WeatherNow – Core Application
- * Optimized: cached DOM, AbortController, DocumentFragment, Map/Set, requestIdleCallback
- * Feature: Custom Range Forecast (date + hour range filter)
+ * WeatherNow – Aplicación Principal (ClimaAhora)
+ * Optimizado: Caché de DOM, AbortController, DocumentFragment, Map/Set, requestIdleCallback
+ * Características: Previsión por Rango Personalizado, Multi-idioma (Español)
  */
 
 'use strict';
 
-// ── WMO code map ───────────────────────────────────────
+// ── Mapa de códigos WMO (Traducido) ───────────────────
 const WMO = new Map([
-    [0, { icon: '☀️', label: 'Clear sky' }],
-    [1, { icon: '🌤️', label: 'Mainly clear' }],
-    [2, { icon: '⛅', label: 'Partly cloudy' }],
-    [3, { icon: '☁️', label: 'Overcast' }],
-    [45, { icon: '🌫️', label: 'Fog' }],
-    [48, { icon: '🌫️', label: 'Icy fog' }],
-    [51, { icon: '🌦️', label: 'Light drizzle' }],
-    [53, { icon: '🌦️', label: 'Moderate drizzle' }],
-    [55, { icon: '🌧️', label: 'Dense drizzle' }],
-    [61, { icon: '🌧️', label: 'Slight rain' }],
-    [63, { icon: '🌧️', label: 'Moderate rain' }],
-    [65, { icon: '🌧️', label: 'Heavy rain' }],
-    [71, { icon: '🌨️', label: 'Slight snow' }],
-    [73, { icon: '🌨️', label: 'Moderate snow' }],
-    [75, { icon: '❄️', label: 'Heavy snow' }],
-    [77, { icon: '🌨️', label: 'Snow grains' }],
-    [80, { icon: '🌦️', label: 'Slight showers' }],
-    [81, { icon: '🌧️', label: 'Moderate showers' }],
-    [82, { icon: '⛈️', label: 'Violent showers' }],
-    [85, { icon: '🌨️', label: 'Snow showers' }],
-    [86, { icon: '❄️', label: 'Heavy snow showers' }],
-    [95, { icon: '⛈️', label: 'Thunderstorm' }],
-    [96, { icon: '⛈️', label: 'Thunderstorm + hail' }],
-    [99, { icon: '⛈️', label: 'Severe thunderstorm' }],
+    [0, { icon: '☀️', label: 'Cielo despejado' }],
+    [1, { icon: '🌤️', label: 'Principalmente despejado' }],
+    [2, { icon: '⛅', label: 'Parcialmente nublado' }],
+    [3, { icon: '☁️', label: 'Nublado' }],
+    [45, { icon: '🌫️', label: 'Niebla' }],
+    [48, { icon: '🌫️', label: 'Niebla escarchada' }],
+    [51, { icon: '🌦️', label: 'Llovizna ligera' }],
+    [53, { icon: '🌦️', label: 'Llovizna moderada' }],
+    [55, { icon: '🌧️', label: 'Llovizna densa' }],
+    [61, { icon: '🌧️', label: 'Lluvia débil' }],
+    [63, { icon: '🌧️', label: 'Lluvia moderada' }],
+    [65, { icon: '🌧️', label: 'Lluvia fuerte' }],
+    [71, { icon: '🌨️', label: 'Nieve débil' }],
+    [73, { icon: '🌨️', label: 'Nieve moderada' }],
+    [75, { icon: '❄️', label: 'Nieve fuerte' }],
+    [77, { icon: '🌨️', label: 'Granos de nieve' }],
+    [80, { icon: '🌦️', label: 'Chubascos ligeros' }],
+    [81, { icon: '🌧️', label: 'Chubascos moderados' }],
+    [82, { icon: '⛈️', label: 'Chubascos violentos' }],
+    [85, { icon: '🌨️', label: 'Chubascos de nieve ligeros' }],
+    [86, { icon: '❄️', label: 'Chubascos de nieve fuertes' }],
+    [95, { icon: '⛈️', label: 'Tormenta' }],
+    [96, { icon: '⛈️', label: 'Tormenta con granizo' }],
+    [99, { icon: '⛈️', label: 'Tormenta fuerte' }],
 ]);
 
 const RAIN_CODES = new Set([51, 53, 55, 61, 63, 65, 80, 81, 82]);
 const SNOW_CODES = new Set([71, 73, 75, 77, 85, 86]);
 const STORM_CODES = new Set([95, 96, 99]);
-const wmo = code => WMO.get(code) ?? { icon: '🌡️', label: 'Unknown' };
+const wmo = code => WMO.get(code) ?? { icon: '🌡️', label: 'Desconocido' };
 
-// ── State ──────────────────────────────────────────────
+// ── Estado ─────────────────────────────────────────────
 const state = { loc: null, weather: null, unit: 'C' };
 
-// ── Pure helpers ───────────────────────────────────────
+// ── Ayudantes puros ────────────────────────────────────
 const toF = c => Math.round(c * 9 / 5 + 32);
 const dispT = c => state.unit === 'F' ? toF(c) : Math.round(c);
 const unitSym = () => `°${state.unit}`;
 
-/**
- * Returns a local-time prefix string "YYYY-MM-DDTHH" that matches
- * the format Open-Meteo returns (already in the location's local timezone).
- * We build it manually from local Date parts to avoid UTC conversion bugs.
- */
 function localHourPrefix(date) {
     const Y = date.getFullYear();
     const M = String(date.getMonth() + 1).padStart(2, '0');
@@ -62,42 +57,44 @@ function localHourPrefix(date) {
 
 function fmtTime(iso) {
     if (!iso) return '–';
-    return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
-function fmtHour(h) { return `${h % 12 || 12}${h >= 12 ? 'PM' : 'AM'}`; }
-function fmtDateShort(d) { return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
+function fmtHour(h) {
+    return `${h}:00`;
+}
+function fmtDateShort(d) {
+    return d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+}
 
 function uvLabel(uv) {
-    if (uv <= 2) return `${uv} Low`;
-    if (uv <= 5) return `${uv} Moderate`;
-    if (uv <= 7) return `${uv} High`;
-    if (uv <= 10) return `${uv} Very High`;
-    return `${uv} Extreme`;
+    if (uv <= 2) return `${uv} Bajo`;
+    if (uv <= 5) return `${uv} Moderado`;
+    if (uv <= 7) return `${uv} Alto`;
+    if (uv <= 10) return `${uv} Muy Alto`;
+    return `${uv} Extremo`;
 }
 function uvDesc(uv) {
-    if (uv <= 2) return 'No protection needed';
-    if (uv <= 5) return 'Some protection';
-    if (uv <= 7) return 'Wear SPF 30+';
-    if (uv <= 10) return 'Extra protection';
-    return 'Avoid outdoors';
+    if (uv <= 2) return 'No necesita protección';
+    if (uv <= 5) return 'Se recomienda protección';
+    if (uv <= 7) return 'Use protector solar FPS 30+';
+    if (uv <= 10) return 'Necesita protección extra';
+    return 'Evite salir';
 }
-function humLabel(h) { return h < 30 ? 'Dry' : h < 60 ? 'Comfortable' : h < 80 ? 'Humid' : 'Very humid'; }
+function humLabel(h) { return h < 30 ? 'Seco' : h < 60 ? 'Confortable' : h < 80 ? 'Húmedo' : 'Muy húmedo'; }
 function visLabel(v) {
     const km = v / 1000;
-    return km >= 10 ? 'Excellent' : km >= 5 ? 'Good' : km >= 2 ? 'Moderate' : 'Poor';
+    return km >= 10 ? 'Excelente' : km >= 5 ? 'Buena' : km >= 2 ? 'Moderada' : 'Pobre';
 }
 function windDir(deg) {
-    return ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(deg / 45) % 8] + ' wind';
+    return 'Viento del ' + ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'][Math.round(deg / 45) % 8];
 }
 
-// ── Cached DOM refs ─────────────────────────────────────
+// ── Caché de referencias DOM ───────────────────────────
 let dom = {};
 
-// ── Fetch controller & search timer ───────────────────
 let fetchCtrl = null;
 let searchTimer = null;
 
-// ── Toast ──────────────────────────────────────────────
 let toastTimer = null;
 function toast(msg, type = '') {
     clearTimeout(toastTimer);
@@ -106,14 +103,13 @@ function toast(msg, type = '') {
     toastTimer = setTimeout(() => { dom.toast.className = 'toast'; }, 3200);
 }
 
-// ── State visibility ───────────────────────────────────
 function showState(id) {
     dom.stateWelcome.hidden = id !== 'welcome';
     dom.stateLoading.hidden = id !== 'loading';
     dom.stateWeather.hidden = id !== 'weather';
 }
 
-// ── Animated background ────────────────────────────────
+// ── Fondo animado ──────────────────────────────────────
 function spawnParticles() {
     const frag = document.createDocumentFragment();
     for (let i = 0; i < 28; i++) {
@@ -180,14 +176,14 @@ function setBg(code) {
     dom.bgGrad.style.background = bgStyle;
 }
 
-// ── Geocoding ──────────────────────────────────────────
+// ── Geocodificación ────────────────────────────────────
 async function searchCities(q) {
     if (!q || q.length < 2) { hideSugg(); return; }
     if (fetchCtrl) fetchCtrl.abort();
     fetchCtrl = new AbortController();
     try {
         const res = await fetch(
-            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=en&format=json`,
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=es&format=json`,
             { signal: fetchCtrl.signal }
         );
         const data = await res.json();
@@ -239,14 +235,14 @@ function pickCity(r) {
     fetchWeather();
 }
 
-// ── Fetch weather ──────────────────────────────────────
+// ── Obtener clima ──────────────────────────────────────
 async function fetchWeather() {
     if (!state.loc) return;
     if (fetchCtrl) fetchCtrl.abort();
     fetchCtrl = new AbortController();
 
     showState('loading');
-    dom.loadingText.textContent = `Fetching weather for ${state.loc.name}…`;
+    dom.loadingText.textContent = `Cargando el tiempo para ${state.loc.name}…`;
 
     const { lat, lon, timezone } = state.loc;
     const url =
@@ -269,23 +265,23 @@ async function fetchWeather() {
     } catch (e) {
         if (e.name === 'AbortError') return;
         showState('welcome');
-        toast('❌ Could not load weather. Check your connection.', 'err');
+        toast('❌ No se pudo cargar el clima. Compruebe su conexión.', 'err');
     }
 }
 
-// ── Main render ────────────────────────────────────────
+// ── Renderizado principal ──────────────────────────────
 function render(data) {
     const c = data.current, d = data.daily, h = data.hourly;
     const w = wmo(c.weather_code);
 
     dom.curCity.textContent = state.loc.name;
     dom.curCountry.textContent = [state.loc.admin1, state.loc.country].filter(Boolean).join(', ');
-    dom.curUpdated.textContent = `Updated ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+    dom.curUpdated.textContent = `Actualizado ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
     dom.curIcon.textContent = w.icon;
     dom.curTemp.textContent = dispT(c.temperature_2m);
     dom.curUnit.textContent = unitSym();
     dom.curDesc.textContent = w.label;
-    dom.curFeels.textContent = `Feels like ${dispT(c.apparent_temperature)}${unitSym()}`;
+    dom.curFeels.textContent = `Sensación térmica ${dispT(c.apparent_temperature)}${unitSym()}`;
     dom.sHumidity.textContent = `${c.relative_humidity_2m}%`;
     dom.sWind.textContent = `${Math.round(c.wind_speed_10m)} km/h`;
     dom.sVisibility.textContent = `${(c.visibility / 1000).toFixed(1)} km`;
@@ -298,17 +294,12 @@ function render(data) {
     renderDetails(c, d);
 }
 
-// ── Hourly forecast ────────────────────────────────────
-/**
- * Finds the current hour by comparing the "YYYY-MM-DDTHH" prefix of the
- * API's local-time strings against the device's local time parts.
- * This avoids all UTC/timezone conversion bugs.
- */
+// ── Previsión por horas ────────────────────────────────
 function renderHourly(h) {
     const now = new Date();
-    const prefix = localHourPrefix(now);   // e.g. "2026-03-02T10"
+    const prefix = localHourPrefix(now);   // e.g. "2026-03-02T11"
 
-    // Find the index whose time string starts with the current local hour prefix
+    // Buscar el índice del primer slot que coincide con la hora actual
     let startIdx = 0;
     for (let i = 0; i < h.time.length; i++) {
         if (h.time[i] >= prefix) {
@@ -318,11 +309,12 @@ function renderHourly(h) {
     }
 
     const frag = document.createDocumentFragment();
+    // Mostrar 24 horas empezando EXACTAMENTE desde ahora
     const endIdx = Math.min(startIdx + 24, h.time.length);
 
     for (let i = startIdx; i < endIdx; i++) {
         const timeStr = h.time[i];                    // "2026-03-02T10:00"
-        const hour = parseInt(timeStr.slice(11, 13), 10);
+        const hourNum = parseInt(timeStr.slice(11, 13), 10);
         const isNow = i === startIdx;
         const w = wmo(h.weather_code[i]);
         const prec = h.precipitation_probability[i];
@@ -331,7 +323,7 @@ function renderHourly(h) {
         el.className = `hour${isNow ? ' now' : ''}`;
         el.setAttribute('role', 'listitem');
         el.innerHTML =
-            `<span class="hour-time">${isNow ? 'Now' : fmtHour(hour)}</span>`
+            `<span class="hour-time">${isNow ? 'Ahora' : fmtHour(hourNum)}</span>`
             + `<span class="hour-icon" aria-hidden="true">${w.icon}</span>`
             + `<span class="hour-temp">${dispT(h.temperature_2m[i])}°</span>`
             + (prec > 10 ? `<span class="hour-rain">💧${prec}%</span>` : '');
@@ -340,24 +332,22 @@ function renderHourly(h) {
 
     dom.hourlyStrip.innerHTML = '';
     dom.hourlyStrip.appendChild(frag);
-    dom.hourlyStrip.querySelector('.now')?.scrollIntoView({
-        behavior: 'smooth', block: 'nearest', inline: 'center',
-    });
+    dom.hourlyStrip.scrollTo(0, 0); // Reset scroll to the beginning
 }
 
-// ── Daily forecast ─────────────────────────────────────
+// ── Previsión diaria ───────────────────────────────────
 function renderDaily(d) {
-    const today = new Date().toDateString();
+    const todayStr = new Date().toDateString();
     const frag = document.createDocumentFragment();
     for (let i = 0; i < 7; i++) {
-        const date = new Date(d.time[i] + 'T12:00'); // force local noon to avoid DST shift
-        const isToday = date.toDateString() === today;
+        const date = new Date(d.time[i] + 'T12:00');
+        const isToday = date.toDateString() === todayStr;
         const w = wmo(d.weather_code[i]);
         const prec = d.precipitation_probability_max[i];
         const li = document.createElement('li');
         li.className = `day${isToday ? ' today' : ''}`;
         li.innerHTML =
-            `<span class="day-name">${isToday ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>`
+            `<span class="day-name">${isToday ? 'Hoy' : date.toLocaleDateString('es-ES', { weekday: 'short', month: 'short', day: 'numeric' })}</span>`
             + `<span class="day-icon" aria-hidden="true">${w.icon}</span>`
             + `<span class="day-desc">${w.label}${prec > 0 ? ` · 💧${prec}%` : ''}</span>`
             + `<span class="day-temps"><span class="day-max">${dispT(d.temperature_2m_max[i])}°</span>`
@@ -368,21 +358,21 @@ function renderDaily(d) {
     dom.dailyList.appendChild(frag);
 }
 
-// ── Atmospheric details ────────────────────────────────
+// ── Detalles atmosféricos ──────────────────────────────
 function renderDetails(c, d) {
     const items = [
-        { icon: '🌡️', label: 'Temperature', val: `${dispT(c.temperature_2m)}${unitSym()}`, sub: `Feels ${dispT(c.apparent_temperature)}°` },
-        { icon: '💧', label: 'Humidity', val: `${c.relative_humidity_2m}%`, sub: humLabel(c.relative_humidity_2m) },
-        { icon: '☁️', label: 'Pressure', val: `${Math.round(c.surface_pressure)} hPa`, sub: 'Atmospheric' },
-        { icon: '💨', label: 'Wind', val: `${Math.round(c.wind_speed_10m)} km/h`, sub: windDir(c.wind_direction_10m) },
-        { icon: '☀️', label: 'UV Index', val: `${c.uv_index}`, sub: uvDesc(c.uv_index) },
-        { icon: '🌧️', label: 'Precipitation', val: `${c.precipitation} mm`, sub: 'Current hour' },
-        { icon: '👁️', label: 'Visibility', val: `${(c.visibility / 1000).toFixed(1)} km`, sub: visLabel(c.visibility) },
-        { icon: '📈', label: 'Today High', val: `${dispT(d.temperature_2m_max[0])}${unitSym()}`, sub: 'Daily maximum' },
-        { icon: '📉', label: 'Today Low', val: `${dispT(d.temperature_2m_min[0])}${unitSym()}`, sub: 'Daily minimum' },
-        { icon: '🌅', label: 'Sunrise', val: fmtTime(d.sunrise[0]), sub: 'Local time' },
-        { icon: '🌇', label: 'Sunset', val: fmtTime(d.sunset[0]), sub: 'Local time' },
-        { icon: '🌬️', label: 'Max Wind', val: `${Math.round(d.wind_speed_10m_max[0])} km/h`, sub: "Today's peak" },
+        { icon: '🌡️', label: 'Temperatura', val: `${dispT(c.temperature_2m)}${unitSym()}`, 助: `Sensación ${dispT(c.apparent_temperature)}°` },
+        { icon: '💧', label: 'Humedad', val: `${c.relative_humidity_2m}%`, sub: humLabel(c.relative_humidity_2m) },
+        { icon: '☁️', label: 'Presión', val: `${Math.round(c.surface_pressure)} hPa`, sub: 'Atmosférica' },
+        { icon: '💨', label: 'Viento', val: `${Math.round(c.wind_speed_10m)} km/h`, sub: windDir(c.wind_direction_10m) },
+        { icon: '☀️', label: 'Índice UV', val: `${c.uv_index}`, sub: uvDesc(c.uv_index) },
+        { icon: '🌧️', label: 'Precipitación', val: `${c.precipitation} mm`, sub: 'Hora actual' },
+        { icon: '👁️', label: 'Visibilidad', val: `${(c.visibility / 1000).toFixed(1)} km`, sub: visLabel(c.visibility) },
+        { icon: '📈', label: 'Máxima Hoy', val: `${dispT(d.temperature_2m_max[0])}${unitSym()}`, sub: 'Máxima diaria' },
+        { icon: '📉', label: 'Mínima Hoy', val: `${dispT(d.temperature_2m_min[0])}${unitSym()}`, sub: 'Mínima diaria' },
+        { icon: '🌅', label: 'Amanecer', val: fmtTime(d.sunrise[0]), sub: 'Hora local' },
+        { icon: '🌇', label: 'Atardecer', val: fmtTime(d.sunset[0]), sub: 'Hora local' },
+        { icon: '🌬️', label: 'Viento Máx', val: `${Math.round(d.wind_speed_10m_max[0])} km/h`, sub: "Racha máxima" },
     ];
     const frag = document.createDocumentFragment();
     items.forEach(({ icon, label, val, sub }) => {
@@ -400,7 +390,7 @@ function renderDetails(c, d) {
 }
 
 // ════════════════════════════════════════════════════════
-// CUSTOM RANGE FORECAST
+// RANGO PERSONALIZADO
 // ════════════════════════════════════════════════════════
 
 function initRangePicker(data) {
@@ -414,7 +404,7 @@ function initRangePicker(data) {
     dom.toDate.value = lastDate;
 
     const hourOpts = Array.from({ length: 24 }, (_, h) =>
-        `<option value="${h}">${fmtHour(h)}</option>`
+        `<option value="${h}">${h}:00</option>`
     ).join('');
 
     dom.fromHour.innerHTML = hourOpts;
@@ -435,17 +425,16 @@ function applyRange() {
     const fromH = parseInt(dom.fromHour.value, 10);
     const toH = parseInt(dom.toHour.value, 10);
 
-    if (!fromDate || !toDate) { toast('Please select both dates.', 'err'); return; }
+    if (!fromDate || !toDate) { toast('Seleccione ambas fechas.', 'err'); return; }
 
-    // Build local-time prefix strings to compare directly against API strings
     const fromPrefix = `${fromDate}T${String(fromH).padStart(2, '0')}`;
     const toPrefix = `${toDate}T${String(toH).padStart(2, '0')}`;
 
-    if (fromPrefix > toPrefix) { toast('Start must be before end.', 'err'); return; }
+    if (fromPrefix > toPrefix) { toast('El inicio debe ser antes del fin.', 'err'); return; }
 
     const entries = [];
     for (let i = 0; i < h.time.length; i++) {
-        const t = h.time[i]; // "YYYY-MM-DDTHH:00"
+        const t = h.time[i];
         if (t >= fromPrefix && t <= toPrefix + ':59') {
             entries.push({
                 time: h.time[i],
@@ -462,11 +451,10 @@ function applyRange() {
 
     if (entries.length === 0) {
         dom.rangeEmpty.hidden = false;
-        dom.rangeEmpty.textContent = '⚠️ No data in this range. Forecast covers 7 days from today.';
+        dom.rangeEmpty.textContent = '⚠️ Sin datos en este rango.';
         return;
     }
 
-    // Summary stats
     const temps = entries.map(e => e.temp);
     const avgT = temps.reduce((a, b) => a + b, 0) / temps.length;
     const maxT = Math.max(...temps);
@@ -479,13 +467,13 @@ function applyRange() {
     const domW = wmo(domCode);
 
     const chips = [
-        { icon: domW.icon, label: 'Dominant', val: domW.label },
-        { icon: '🌡️', label: 'Avg Temp', val: `${dispT(avgT)}${unitSym()}` },
-        { icon: '📈', label: 'Max', val: `${dispT(maxT)}${unitSym()}` },
-        { icon: '📉', label: 'Min', val: `${dispT(minT)}${unitSym()}` },
-        { icon: '💧', label: 'Rain', val: `${avgPr}%` },
-        { icon: '🌢️', label: 'Humidity', val: `${avgHu}%` },
-        { icon: '🕐', label: 'Hours', val: `${entries.length}h` },
+        { icon: domW.icon, label: 'Dominante', val: domW.label },
+        { icon: '🌡️', label: 'Temp Media', val: `${dispT(avgT)}${unitSym()}` },
+        { icon: '📈', label: 'Máx', val: `${dispT(maxT)}${unitSym()}` },
+        { icon: '📉', label: 'Mín', val: `${dispT(minT)}${unitSym()}` },
+        { icon: '💧', label: 'Lluvia', val: `${avgPr}%` },
+        { icon: '🌢️', label: 'Humedad', val: `${avgHu}%` },
+        { icon: '🕐', label: 'Horas', val: `${entries.length}h` },
     ];
 
     const sumFrag = document.createDocumentFragment();
@@ -501,11 +489,10 @@ function applyRange() {
     dom.rangeSummary.innerHTML = '';
     dom.rangeSummary.appendChild(sumFrag);
 
-    // Hour cards
     const hourFrag = document.createDocumentFragment();
     let lastDay = '';
     entries.forEach(entry => {
-        const hour = parseInt(entry.time.slice(11, 13), 10);
+        const hourNum = parseInt(entry.time.slice(11, 13), 10);
         const dateD = new Date(entry.time + ':00');
         const dayStr = fmtDateShort(dateD);
         const w = wmo(entry.code);
@@ -514,7 +501,7 @@ function applyRange() {
         card.setAttribute('role', 'listitem');
         card.innerHTML =
             (dayStr !== lastDay ? `<span class="rh-date">${dayStr}</span>` : `<span class="rh-date"></span>`)
-            + `<span class="rh-time">${fmtHour(hour)}</span>`
+            + `<span class="rh-time">${fmtHour(hourNum)}</span>`
             + `<span class="rh-icon" aria-hidden="true">${w.icon}</span>`
             + `<span class="rh-temp">${dispT(entry.temp)}°</span>`
             + (entry.prec > 10 ? `<span class="rh-rain">💧${entry.prec}%</span>` : '')
@@ -529,7 +516,7 @@ function applyRange() {
     dom.rangeResults.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// ── Init ────────────────────────────────────────────────
+// ── Inicialización ─────────────────────────────────────
 function init() {
     dom = {
         bgGrad: document.getElementById('bgGrad'),
@@ -578,15 +565,13 @@ function init() {
     spawnParticles();
     hideSugg();
 
-    // Unit toggle
     dom.btnUnit.addEventListener('click', () => {
         state.unit = state.unit === 'C' ? 'F' : 'C';
         dom.btnUnit.textContent = `°${state.unit}`;
         if (state.weather) render(state.weather);
-        toast(`Switched to °${state.unit}`);
+        toast(`Cambiado a °${state.unit}`);
     });
 
-    // Search input
     dom.cityInput.addEventListener('input', () => {
         const v = dom.cityInput.value.trim();
         dom.btnClear.hidden = !v;
@@ -620,7 +605,6 @@ function init() {
         if (!e.target.closest('.search-wrap')) hideSugg();
     }, { passive: true });
 
-    // Quick chips
     document.querySelectorAll('.chip').forEach(chip => {
         chip.addEventListener('click', () => {
             dom.cityInput.value = chip.dataset.city;
@@ -631,12 +615,11 @@ function init() {
         });
     });
 
-    // Geolocation
     dom.btnLocate.addEventListener('click', () => {
-        if (!navigator.geolocation) { toast('Geolocation not supported', 'err'); return; }
+        if (!navigator.geolocation) { toast('Geolocalización no soportada', 'err'); return; }
         dom.btnLocate.style.opacity = '.45';
         showState('loading');
-        dom.loadingText.textContent = 'Getting your location…';
+        dom.loadingText.textContent = 'Obteniendo localización…';
         navigator.geolocation.getCurrentPosition(async pos => {
             dom.btnLocate.style.opacity = '1';
             const { latitude: lat, longitude: lon } = pos.coords;
@@ -645,12 +628,12 @@ function init() {
                 const data = await res.json();
                 const addr = data.address ?? {};
                 state.loc = {
-                    name: addr.city || addr.town || addr.village || 'My Location',
+                    name: addr.city || addr.town || addr.village || 'Mi ubicación',
                     admin1: addr.state || '', country: addr.country || '',
                     lat, lon, timezone: 'auto',
                 };
             } catch {
-                state.loc = { name: 'My Location', admin1: '', country: '', lat, lon, timezone: 'auto' };
+                state.loc = { name: 'Mi ubicación', admin1: '', country: '', lat, lon, timezone: 'auto' };
             }
             dom.cityInput.value = state.loc.name;
             dom.btnClear.hidden = false;
@@ -658,14 +641,12 @@ function init() {
         }, () => {
             dom.btnLocate.style.opacity = '1';
             showState('welcome');
-            toast('Location access denied.', 'err');
+            toast('Acceso a la ubicación denegado.', 'err');
         }, { timeout: 10_000 });
     });
 
-    // Range picker
     dom.btnRange.addEventListener('click', applyRange);
 
-    // Auto-refresh every 10 min
     const refresh = () => { if (state.loc) fetchWeather(); };
     setInterval(() => {
         if ('requestIdleCallback' in window) requestIdleCallback(refresh, { timeout: 5000 });
