@@ -1,13 +1,14 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#090910" />
-    <title>ClimaAhora – Previsión en tiempo real</title>
+      <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/1163/1163763.png" />
+  <title>ClimaAhora â€“ PrevisiÃ³n en tiempo real</title>
     <meta name="description"
-        content="Previsión meteorológica en tiempo real con datos por horas, 7 días y rango personalizado." />
+        content="PrevisiÃ³n meteorolÃ³gica en tiempo real con datos por horas, 7 dÃ­as y rango personalizado." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -30,14 +31,14 @@
         <!-- Cabecera -->
         <header class="header" role="banner">
             <a class="logo" aria-label="ClimaAhora inicio">
-                <span class="logo-icon" aria-hidden="true">🌤️</span>
+                <span class="logo-icon" aria-hidden="true">ðŸŒ¤ï¸</span>
                 <span class="logo-text">Clima<span class="logo-hi">Ahora</span></span>
             </a>
-            <button class="btn-unit" id="btnUnit" aria-label="Cambiar unidad de temperatura">°C</button>
+            <button class="btn-unit" id="btnUnit" aria-label="Cambiar unidad de temperatura">Â°C</button>
         </header>
 
-        <!-- Búsqueda -->
-        <section class="search-row" aria-label="Búsqueda de ciudad">
+        <!-- BÃºsqueda -->
+        <section class="search-row" aria-label="BÃºsqueda de ciudad">
             <div class="search-wrap">
                 <div class="search-box" role="combobox" aria-expanded="false" aria-haspopup="listbox"
                     aria-owns="suggestions">
@@ -46,10 +47,10 @@
                         <circle cx="11" cy="11" r="8" />
                         <path d="m21 21-4.35-4.35" />
                     </svg>
-                    <input id="cityInput" type="search" placeholder="Buscar ciudad…" autocomplete="off"
+                    <input id="cityInput" type="search" placeholder="Buscar ciudadâ€¦" autocomplete="off"
                         aria-label="Nombre de ciudad" aria-autocomplete="list" aria-controls="suggestions"
                         spellcheck="false" />
-                    <button class="btn-clear" id="btnClear" aria-label="Limpiar" hidden>✕</button>
+                    <button class="btn-clear" id="btnClear" aria-label="Limpiar" hidden>âœ•</button>
                     <button class="btn-go" id="btnGo" aria-label="Buscar">
                         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2.5">
@@ -59,7 +60,7 @@
                 </div>
                 <ul class="suggestions" id="suggestions" role="listbox" aria-label="Sugerencias de ciudades"></ul>
             </div>
-            <button class="btn-locate" id="btnLocate" aria-label="Usar mi ubicación">
+            <button class="btn-locate" id="btnLocate" aria-label="Usar mi ubicaciÃ³n">
                 <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2">
                     <circle cx="12" cy="12" r="3" />
@@ -74,17 +75,17 @@
 
             <!-- Bienvenida -->
             <section class="state-welcome" id="stateWelcome">
-                <span class="welcome-icon" aria-hidden="true">🌍</span>
+                <span class="welcome-icon" aria-hidden="true">ðŸŒ</span>
                 <h1>Descubre el tiempo</h1>
-                <p>Busca cualquier ciudad o usa tu ubicación.</p>
-                <div class="chips" role="list" aria-label="Acceso rápido a ciudades">
-                    <span class="chip-label" aria-hidden="true">Acceso rápido:</span>
+                <p>Busca cualquier ciudad o usa tu ubicaciÃ³n.</p>
+                <div class="chips" role="list" aria-label="Acceso rÃ¡pido a ciudades">
+                    <span class="chip-label" aria-hidden="true">Acceso rÃ¡pido:</span>
                     <button class="chip" data-city="Madrid" role="listitem">Madrid</button>
                     <button class="chip" data-city="Barcelona" role="listitem">Barcelona</button>
                     <button class="chip" data-city="Londres" role="listitem">Londres</button>
                     <button class="chip" data-city="Nueva York" role="listitem">Nueva York</button>
                     <button class="chip" data-city="Tokio" role="listitem">Tokio</button>
-                    <button class="chip" data-city="París" role="listitem">París</button>
+                    <button class="chip" data-city="ParÃ­s" role="listitem">ParÃ­s</button>
                     <button class="chip" data-city="Buenos Aires" role="listitem">Buenos Aires</button>
                 </div>
             </section>
@@ -92,62 +93,62 @@
             <!-- Cargando -->
             <section class="state-loading" id="stateLoading" aria-label="Cargando" hidden>
                 <div class="loader" aria-hidden="true"><span></span><span></span><span></span></div>
-                <p id="loadingText">Cargando el tiempo…</p>
+                <p id="loadingText">Cargando el tiempoâ€¦</p>
             </section>
 
-            <!-- Datos meteorológicos -->
+            <!-- Datos meteorolÃ³gicos -->
             <section class="weather" id="stateWeather" hidden>
 
                 <!-- Tiempo actual -->
                 <article class="card card-current" aria-label="Tiempo actual">
                     <div class="cur-top">
                         <div>
-                            <div class="cur-city" id="curCity">–</div>
-                            <div class="cur-country" id="curCountry">–</div>
-                            <div class="cur-updated" id="curUpdated">–</div>
+                            <div class="cur-city" id="curCity">â€“</div>
+                            <div class="cur-country" id="curCountry">â€“</div>
+                            <div class="cur-updated" id="curUpdated">â€“</div>
                         </div>
-                        <div class="cur-icon" id="curIcon" aria-hidden="true">🌤️</div>
+                        <div class="cur-icon" id="curIcon" aria-hidden="true">ðŸŒ¤ï¸</div>
                     </div>
                     <div class="cur-temp-row">
-                        <span class="cur-temp" id="curTemp">–</span>
-                        <span class="cur-unit" id="curUnit">°C</span>
+                        <span class="cur-temp" id="curTemp">â€“</span>
+                        <span class="cur-unit" id="curUnit">Â°C</span>
                     </div>
-                    <div class="cur-desc" id="curDesc">–</div>
-                    <div class="cur-feels" id="curFeels">–</div>
+                    <div class="cur-desc" id="curDesc">â€“</div>
+                    <div class="cur-feels" id="curFeels">â€“</div>
                     <dl class="stats">
                         <div class="stat">
-                            <dt>💧 Humedad</dt>
-                            <dd id="sHumidity">–</dd>
+                            <dt>ðŸ’§ Humedad</dt>
+                            <dd id="sHumidity">â€“</dd>
                         </div>
                         <div class="stat">
-                            <dt>💨 Viento</dt>
-                            <dd id="sWind">–</dd>
+                            <dt>ðŸ’¨ Viento</dt>
+                            <dd id="sWind">â€“</dd>
                         </div>
                         <div class="stat">
-                            <dt>👁️ Visibilidad</dt>
-                            <dd id="sVisibility">–</dd>
+                            <dt>ðŸ‘ï¸ Visibilidad</dt>
+                            <dd id="sVisibility">â€“</dd>
                         </div>
                         <div class="stat">
-                            <dt>☀️ Índice UV</dt>
-                            <dd id="sUV">–</dd>
+                            <dt>â˜€ï¸ Ãndice UV</dt>
+                            <dd id="sUV">â€“</dd>
                         </div>
                         <div class="stat">
-                            <dt>🌅 Amanecer</dt>
-                            <dd id="sSunrise">–</dd>
+                            <dt>ðŸŒ… Amanecer</dt>
+                            <dd id="sSunrise">â€“</dd>
                         </div>
                         <div class="stat">
-                            <dt>🌇 Atardecer</dt>
-                            <dd id="sSunset">–</dd>
+                            <dt>ðŸŒ‡ Atardecer</dt>
+                            <dd id="sSunset">â€“</dd>
                         </div>
                     </dl>
                 </article>
 
-                <!-- ══ PREVISIÓN POR RANGO ══ -->
-                <article class="card card-range" aria-label="Previsión por rango personalizado">
+                <!-- â•â• PREVISIÃ“N POR RANGO â•â• -->
+                <article class="card card-range" aria-label="PrevisiÃ³n por rango personalizado">
                     <h2 class="card-title">
-                        <span aria-hidden="true">🗓️</span> Previsión por Rango
+                        <span aria-hidden="true">ðŸ—“ï¸</span> PrevisiÃ³n por Rango
                     </h2>
-                    <p class="range-hint">Selecciona un rango de fechas y horas para ver la previsión detallada de ese
+                    <p class="range-hint">Selecciona un rango de fechas y horas para ver la previsiÃ³n detallada de ese
                         periodo.</p>
 
                     <div class="range-form" role="group" aria-label="Selector de rango">
@@ -166,7 +167,7 @@
                                 </div>
                             </div>
 
-                            <div class="range-arrow" aria-hidden="true">→</div>
+                            <div class="range-arrow" aria-hidden="true">â†’</div>
 
                             <div class="range-col">
                                 <span class="range-col-label">Hasta</span>
@@ -189,7 +190,7 @@
                                 <circle cx="11" cy="11" r="8" />
                                 <path d="m21 21-4.35-4.35M11 8v6M8 11h6" />
                             </svg>
-                            Ver Previsión
+                            Ver PrevisiÃ³n
                         </button>
                     </div>
 
@@ -200,21 +201,21 @@
                     <p class="range-empty" id="rangeEmpty" hidden></p>
                 </article>
 
-                <!-- Previsión por horas -->
-                <article class="card" aria-label="Previsión por horas">
-                    <h2 class="card-title">Previsión por Horas</h2>
+                <!-- PrevisiÃ³n por horas -->
+                <article class="card" aria-label="PrevisiÃ³n por horas">
+                    <h2 class="card-title">PrevisiÃ³n por Horas</h2>
                     <div class="hourly-strip" id="hourlyStrip" role="list"></div>
                 </article>
 
-                <!-- Previsión 7 días -->
-                <article class="card" aria-label="Previsión 7 días">
-                    <h2 class="card-title">Previsión 7 Días</h2>
+                <!-- PrevisiÃ³n 7 dÃ­as -->
+                <article class="card" aria-label="PrevisiÃ³n 7 dÃ­as">
+                    <h2 class="card-title">PrevisiÃ³n 7 DÃ­as</h2>
                     <ul class="daily-list" id="dailyList"></ul>
                 </article>
 
-                <!-- Detalles atmosféricos -->
-                <article class="card" aria-label="Detalles atmosféricos">
-                    <h2 class="card-title">Detalles Atmosféricos</h2>
+                <!-- Detalles atmosfÃ©ricos -->
+                <article class="card" aria-label="Detalles atmosfÃ©ricos">
+                    <h2 class="card-title">Detalles AtmosfÃ©ricos</h2>
                     <dl class="details-grid" id="detailsGrid"></dl>
                 </article>
 
@@ -222,7 +223,7 @@
         </main>
     </div>
 
-    <!-- Notificación -->
+    <!-- NotificaciÃ³n -->
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script src="app.js" defer></script>
